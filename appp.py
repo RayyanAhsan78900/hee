@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-import matplotlib.pyplot as plt
 from prophet import Prophet
 from prophet.diagnostics import cross_validation, performance_metrics
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
@@ -13,7 +12,6 @@ from datetime import datetime, timedelta
 # Set up your API and base URL for fetching data
 api_key = "l333ljg4122qws9kxkb4hly7a8dje27vk46c7zkceih11wmnrj7lqreku176"
 base_url = "https://metals-api.com/api"
-
 
 # Function to fetch data for a given timeframe, splitting into chunks if necessary
 def fetch_data(start_date, end_date):
@@ -48,7 +46,6 @@ def fetch_data(start_date, end_date):
         start_date = current_end_date + timedelta(days=1)  # Move to the next chunk
 
     return all_data if all_data else None
-
 
 # Streamlit App Configuration
 st.set_page_config(page_title="Tin Price Prediction", layout="wide")
@@ -102,10 +99,6 @@ if data:
     st.subheader("📊 Fetched Data")
     st.write(df.head(30))  # Display the data in the UI
 
-    # Plot the data
-    st.subheader("📈 Tin Price Over Time")
-    st.line_chart(df.set_index('ds')['y'])
-
     # Handle missing values
     st.write("Missing values before filling:", df.isnull().sum().to_dict())
     df.fillna(method='ffill', inplace=True)
@@ -123,8 +116,9 @@ if data:
     future = model.make_future_dataframe(periods=prediction_days)
     forecast = model.predict(future)
 
-    fig1 = model.plot(forecast)
-    st.pyplot(fig1)
+    # Show the forecast data
+    st.write("Prophet Forecast Data:")
+    st.write(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(prediction_days))
 
     # Evaluate the model
     st.subheader("📉 Model Performance Metrics")
@@ -140,7 +134,6 @@ if data:
         try:
             predicted_price = model.predict(pd.DataFrame({'ds': [user_input]}))['yhat'].values[0]
             st.success(f"The predicted price of tin on {user_input} is: ${predicted_price:.2f}")
-            st.balloons()
         except Exception as e:
             st.error(f"Error predicting price: {e}")
 
@@ -160,18 +153,15 @@ if data:
         arima_conf_int = arima_forecast.conf_int()
         arima_pred = arima_forecast.predicted_mean
 
-        # Plot ARIMA forecast
-        plt.figure(figsize=(10, 6))
-        plt.plot(df['ds'], df['y'], label='Historical')
-        plt.plot(pd.date_range(start=df['ds'].iloc[-1], periods=prediction_days + 1, freq='D')[1:], arima_pred,
-                 label='ARIMA Forecast')
-        plt.fill_between(pd.date_range(start=df['ds'].iloc[-1], periods=prediction_days + 1, freq='D')[1:],
-                         arima_conf_int.iloc[:, 0], arima_conf_int.iloc[:, 1], color='pink', alpha=0.3)
-        plt.legend()
-        plt.title('ARIMA Forecast')
-        plt.xlabel('Date')
-        plt.ylabel('Price')
-        st.pyplot(plt)
+        # Show ARIMA forecast data
+        st.write("ARIMA Forecast Data:")
+        arima_forecast_df = pd.DataFrame({
+            'ds': pd.date_range(start=df['ds'].iloc[-1], periods=prediction_days + 1, freq='D')[1:],
+            'forecast': arima_pred,
+            'conf_int_lower': arima_conf_int.iloc[:, 0],
+            'conf_int_upper': arima_conf_int.iloc[:, 1]
+        })
+        st.write(arima_forecast_df)
     else:
         st.write("The time series is not stationary. ARIMA might not provide reliable predictions.")
 else:
