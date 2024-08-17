@@ -7,3 +7,4 @@ scikit-learn==1.2.2
 numpy==1.26.4
 statsmodels==0.14.0
 Cython
+pystan==2.19.1.1
