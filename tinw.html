@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tin Price Prediction</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .metrics {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tin Price Predictor</h1>
+
+        <form method="POST">
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" required>
+
+            <label for="prediction_period">Prediction Period:</label>
+            <select id="prediction_period" name="prediction_period">
+                <option value="6 Months">6 Months</option>
+                <option value="3 Months">3 Months</option>
+                <option value="3 Weeks">3 Weeks</option>
+                <option value="1 Week">1 Week</option>
+            </select>
+
+            <button type="submit">Predict</button>
+        </form>
+
+        {% if error %}
+            <div style="color: red;">
+                <p>{{ error }}</p>
+            </div>
+        {% endif %}
+
+        {% if plot_url %}
+            <h2>Prophet Forecast</h2>
+            <img src="data:image/png;base64,{{ plot_url }}" alt="Prophet Forecast">
+
+            <h2>Model Performance Metrics</h2>
+            <div class="metrics">
+                {{ df_performance|safe }}
+            </div>
+
+            {% if arima_plot_url %}
+                <h2>ARIMA Forecast</h2>
+                <img src="data:image/png;base64,{{ arima_plot_url }}" alt="ARIMA Forecast">
+            {% else %}
+                <p>The time series is not stationary. ARIMA might not provide reliable predictions.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>
